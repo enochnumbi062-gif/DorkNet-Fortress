@@ -13,17 +13,21 @@ class FortressDB:
             filename TEXT,
             importance TEXT,
             timestamp TEXT,
-            size_kb REAL
+            size_kb REAL,
+            encrypted_content BLOB
         )
         """
         self.conn.execute(query)
         self.conn.commit()
 
-    def add_entry(self, filename, importance, size):
-        query = "INSERT INTO storage_index (filename, importance, timestamp, size_kb) VALUES (?, ?, ?, ?)"
-        self.conn.execute(query, (filename, importance, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), size))
+    def add_entry(self, filename, importance, size, content):
+        query = "INSERT INTO storage_index (filename, importance, timestamp, size_kb, encrypted_content) VALUES (?, ?, ?, ?, ?)"
+        self.conn.execute(query, (filename, importance, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), size, content))
         self.conn.commit()
 
     def get_all_files(self):
-        return self.conn.execute("SELECT filename, importance, timestamp FROM storage_index ORDER BY id DESC").fetchall()
-      
+        # Récupère tout sauf le contenu binaire pour l'affichage
+        return self.conn.execute("SELECT id, filename, importance, timestamp, size_kb FROM storage_index ORDER BY id DESC").fetchall()
+
+    def get_file_content(self, file_id):
+        return self.conn.execute("SELECT filename, encrypted_content FROM storage_index WHERE id = ?", (file_id,)).fetchone()
